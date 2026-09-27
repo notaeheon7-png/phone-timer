@@ -3,51 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>머리 위 자동 타이머</title>
 
 <style>
-body {
-  margin: 0;
-  background: #111;
-  color: white;
-  font-family: Arial, sans-serif;
-  text-align: center;
+body{
+  margin:0;
+  background:#111;
+  color:white;
+  font-family:Arial,sans-serif;
+  text-align:center;
 }
 
-.container {
-  padding: 20px 15px;
+.container{
+  padding:20px 15px;
 }
 
-h1 {
-  font-size: 26px;
+h1{
+  font-size:26px;
 }
 
-#timer {
-  font-size: 58px;
-  font-weight: bold;
-  margin: 25px 0;
+#timer{
+  font-size:58px;
+  font-weight:bold;
+  margin:25px 0;
 }
 
-button {
-  font-size: 18px;
-  padding: 14px 20px;
-  margin: 5px;
-  border: none;
-  border-radius: 14px;
+button{
+  font-size:18px;
+  padding:14px 20px;
+  margin:5px;
+  border:0;
+  border-radius:14px;
 }
 
-#status {
-  font-size: 17px;
-  margin: 18px 0;
-  min-height: 25px;
+#status{
+  font-size:17px;
+  margin:18px 0;
+  min-height:25px;
 }
 
-video {
-  width: 100%;
-  max-width: 500px;
-  border-radius: 20px;
-  margin-top: 10px;
-  transform: scaleX(-1);
+video{
+  width:100%;
+  max-width:500px;
+  border-radius:20px;
+  margin-top:10px;
+  transform:scaleX(-1);
 }
 </style>
 </head>
@@ -78,44 +79,51 @@ let running = false;
 let timerInterval = null;
 let detectorStarted = false;
 
+/* 안정화용 카운터 */
+let upCount = 0;
+let downCount = 0;
+
+/* 필요한 연속 감지 횟수 */
+const REQUIRED_COUNT = 8;
+
 const timer = document.getElementById("timer");
 const statusText = document.getElementById("status");
 const video = document.getElementById("video");
 
 
-function updateTimer() {
+function updateTimer(){
 
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
 
   timer.textContent =
-    String(h).padStart(2, "0") + ":" +
-    String(m).padStart(2, "0") + ":" +
-    String(s).padStart(2, "0");
+    String(h).padStart(2,"0") + ":" +
+    String(m).padStart(2,"0") + ":" +
+    String(s).padStart(2,"0");
 }
 
 
-function startTimer() {
+function startTimer(){
 
-  if (running) return;
+  if(running) return;
 
   running = true;
 
-  timerInterval = setInterval(function() {
+  timerInterval = setInterval(function(){
 
     seconds++;
     updateTimer();
 
-  }, 1000);
+  },1000);
 }
 
 
-function stopTimer() {
+function stopTimer(){
 
   running = false;
 
-  if (timerInterval) {
+  if(timerInterval){
 
     clearInterval(timerInterval);
     timerInterval = null;
@@ -124,26 +132,28 @@ function stopTimer() {
 }
 
 
-function resetTimer() {
+function resetTimer(){
 
   stopTimer();
 
   seconds = 0;
 
+  upCount = 0;
+  downCount = 0;
+
   updateTimer();
 
   statusText.textContent = "초기화되었습니다.";
-
 }
 
 
-async function startCamera() {
+async function startCamera(){
 
-  try {
+  try{
 
     statusText.textContent = "🟡 카메라 준비 중...";
 
-    if (typeof FaceDetection === "undefined") {
+    if(typeof FaceDetection === "undefined"){
 
       throw new Error("얼굴 인식 기능을 불러오지 못했습니다.");
 
@@ -152,28 +162,28 @@ async function startCamera() {
     const stream =
       await navigator.mediaDevices.getUserMedia({
 
-        video: {
-          facingMode: "user",
-          width: { ideal: 640 },
-          height: { ideal: 480 }
+        video:{
+          facingMode:"user",
+          width:{ideal:640},
+          height:{ideal:480}
         },
 
-        audio: false
+        audio:false
 
       });
-
 
     video.srcObject = stream;
 
     await video.play();
 
-    statusText.textContent = "🟡 얼굴 인식 준비 중...";
+    statusText.textContent =
+      "🟡 얼굴 인식 준비 중...";
 
     startFaceDetection();
 
   }
 
-  catch (error) {
+  catch(error){
 
     console.log(error);
 
@@ -185,16 +195,15 @@ async function startCamera() {
 }
 
 
-function startFaceDetection() {
+function startFaceDetection(){
 
-  if (detectorStarted) return;
+  if(detectorStarted) return;
 
   detectorStarted = true;
 
-
   const faceDetection = new FaceDetection({
 
-    locateFile: function(file) {
+    locateFile:function(file){
 
       return "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/" + file;
 
@@ -205,18 +214,22 @@ function startFaceDetection() {
 
   faceDetection.setOptions({
 
-    model: "short",
+    model:"short",
 
-    minDetectionConfidence: 0.5
+    minDetectionConfidence:0.5
 
   });
 
 
-  faceDetection.onResults(function(results) {
+  faceDetection.onResults(function(results){
 
+    /* 얼굴이 안 보이면 카운터 초기화 */
 
-    if (!results.detections ||
-        results.detections.length === 0) {
+    if(!results.detections ||
+       results.detections.length === 0){
+
+      upCount = 0;
+      downCount = 0;
 
       stopTimer();
 
@@ -231,51 +244,73 @@ function startFaceDetection() {
     const box =
       results.detections[0].boundingBox;
 
-
-    const centerY = box.yCenter;
+    const centerY =
+      box.yCenter;
 
 
     /*
-      얼굴 중심이 화면 아래쪽에 있으면
+      얼굴 중심이 화면 아래쪽이면
       휴대폰이 머리 위에 있다고 판단
     */
 
-    if (centerY > 0.55) {
+    if(centerY > 0.55){
 
-      startTimer();
+      downCount = 0;
+      upCount++;
 
       statusText.textContent =
-        "🟢 머리 위 감지 → 타이머 실행";
+        "🟡 머리 위 감지 중... " +
+        upCount + "/" + REQUIRED_COUNT;
+
+      if(upCount >= REQUIRED_COUNT){
+
+        startTimer();
+
+        statusText.textContent =
+          "🟢 머리 위 감지 → 타이머 실행";
+
+      }
 
     }
 
-    else {
+    else{
 
-      stopTimer();
+      upCount = 0;
+      downCount++;
 
       statusText.textContent =
-        "🔴 머리 아래 → 타이머 정지";
+        "🟡 타이머 정지 확인 중... " +
+        downCount + "/" + REQUIRED_COUNT;
+
+      if(downCount >= REQUIRED_COUNT){
+
+        stopTimer();
+
+        statusText.textContent =
+          "🔴 머리 아래 → 타이머 정지";
+
+      }
 
     }
 
   });
 
 
-  async function detect() {
+  async function detect(){
 
-    try {
+    try{
 
-      if (video.readyState >= 2) {
+      if(video.readyState >= 2){
 
         await faceDetection.send({
-          image: video
+          image:video
         });
 
       }
 
     }
 
-    catch (error) {
+    catch(error){
 
       console.log(error);
 
@@ -284,11 +319,9 @@ function startFaceDetection() {
 
     }
 
-
     requestAnimationFrame(detect);
 
   }
-
 
   detect();
 
