@@ -2,109 +2,93 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<title>머리 위 카운트다운</title>
+<title>모자 아이폰 자동 타이머</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+    * {
+        box-sizing: border-box;
+    }
 
-html,body{
-  margin:0;
-  width:100%;
-  min-height:100%;
-  background:#111;
-  color:white;
-  font-family:Arial,sans-serif;
-}
+    body {
+        margin: 0;
+        background: #111;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
-body{
-  text-align:center;
-}
+    .container {
+        width: 95%;
+        max-width: 900px;
+    }
 
-.container{
-  width:100%;
-  min-height:100vh;
-  padding:12px;
-}
+    h1 {
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
 
-h1{
-  margin:4px 0 8px;
-  font-size:24px;
-}
+    #timer {
+        font-size: 70px;
+        font-weight: bold;
+        letter-spacing: 3px;
+        margin: 20px 0;
+    }
 
-.settings{
-  display:flex;
-  justify-content:center;
-  gap:8px;
-}
+    .inputs {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
 
-input{
-  width:75px;
-  height:44px;
-  border:0;
-  border-radius:10px;
-  text-align:center;
-  font-size:20px;
-}
+    input {
+        width: 80px;
+        padding: 12px;
+        font-size: 20px;
+        text-align: center;
+        border-radius: 10px;
+        border: none;
+    }
 
-.labels{
-  margin:3px 0;
-}
+    button {
+        width: 100%;
+        max-width: 500px;
+        padding: 15px;
+        margin: 6px 0;
+        border: none;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: bold;
+    }
 
-#timer{
-  font-size:55px;
-  font-weight:bold;
-  margin:8px 0;
-}
+    #status {
+        margin: 15px 0;
+        font-size: 20px;
+    }
 
-button{
-  font-size:16px;
-  padding:11px 15px;
-  margin:3px;
-  border:0;
-  border-radius:12px;
-}
+    #sensorData {
+        margin-top: 15px;
+        padding: 15px;
+        background: #222;
+        border-radius: 12px;
+        font-size: 15px;
+        line-height: 1.7;
+    }
 
-#status{
-  min-height:25px;
-  margin:7px;
-  font-size:16px;
-}
+    .up {
+        color: #00ff88;
+    }
 
-video{
-  width:min(80vw,700px);
-  max-height:50vh;
-  border-radius:18px;
-  object-fit:cover;
-  transform:scaleX(-1);
-}
-
-/* 가로 화면에서 보기 좋게 */
-@media (orientation: landscape){
-
-  .container{
-    padding:8px;
-  }
-
-  h1{
-    font-size:20px;
-    margin:2px;
-  }
-
-  #timer{
-    font-size:48px;
-    margin:4px;
-  }
-
-  video{
-    width:min(70vw,650px);
-    max-height:55vh;
-  }
-}
-
+    .down {
+        color: #ff6666;
+    }
 </style>
 </head>
 
@@ -112,118 +96,82 @@ video{
 
 <div class="container">
 
-<h1>📱 머리 위 자동 카운트다운</h1>
+    <h1>📱 모자 아이폰 자동 타이머</h1>
 
-<div class="settings">
+    <div id="timer">00:00:00</div>
 
-<input id="hours"
-       type="number"
-       min="0"
-       value="0">
+    <div class="inputs">
+        <input id="hours" type="number" min="0" value="0" placeholder="시">
+        <input id="minutes" type="number" min="0" max="59" value="1" placeholder="분">
+        <input id="seconds" type="number" min="0" max="59" value="0" placeholder="초">
+    </div>
 
-<input id="minutes"
-       type="number"
-       min="0"
-       value="0">
+    <button onclick="setTimer()">⏱️ 시간 설정</button>
 
-<input id="secs"
-       type="number"
-       min="0"
-       value="30">
+    <button onclick="startSensors()">
+        📱 센서 시작
+    </button>
 
-</div>
+    <button onclick="resetTimer()">
+        🔄 초기화
+    </button>
 
-<div class="labels">
-시　 분　 초
-</div>
+    <div id="status">
+        센서를 시작해주세요
+    </div>
 
-<div id="timer">
-00:00:30
-</div>
-
-<button onclick="setTime()">
-⏱️ 시간 설정
-</button>
-
-<button onclick="startCamera()">
-📷 카메라 시작
-</button>
-
-<button onclick="resetTimer()">
-🔄 초기화
-</button>
-
-<div id="status">
-시간을 설정해주세요.
-</div>
-
-<video id="video"
-       autoplay
-       playsinline
-       muted>
-</video>
+    <div id="sensorData">
+        가속도계: 대기 중<br>
+        자이로: 대기 중<br>
+        상태: 대기 중
+    </div>
 
 </div>
-
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/face_detection.js"></script>
-
 
 <script>
 
-let remainingSeconds = 30;
-
-let running = false;
+let totalSeconds = 0;
+let remainingSeconds = 0;
 
 let timerInterval = null;
+let sensorStarted = false;
 
-let detectorStarted = false;
+let acceleration = {
+    x: 0,
+    y: 0,
+    z: 0
+};
 
-let upCount = 0;
+let rotation = {
+    alpha: 0,
+    beta: 0,
+    gamma: 0
+};
 
-let downCount = 0;
+let lastMagnitude = 0;
+let movementScore = 0;
 
-const REQUIRED_COUNT = 8;
-
-const timer =
-document.getElementById("timer");
-
-const statusText =
-document.getElementById("status");
-
-const video =
-document.getElementById("video");
+let isUp = false;
 
 
 /* =========================
    시간 표시
 ========================= */
 
-function formatTime(seconds){
+function updateDisplay() {
 
-  const h =
-    Math.floor(seconds / 3600);
+    let h = Math.floor(remainingSeconds / 3600);
 
-  const m =
-    Math.floor((seconds % 3600) / 60);
+    let m = Math.floor(
+        (remainingSeconds % 3600) / 60
+    );
 
-  const s =
-    seconds % 60;
+    let s = remainingSeconds % 60;
 
-  return String(h).padStart(2,"0")
-    + ":" +
-    String(m).padStart(2,"0")
-    + ":" +
-    String(s).padStart(2,"0");
-
-}
-
-
-function updateTimer(){
-
-  timer.textContent =
-    formatTime(remainingSeconds);
-
+    document.getElementById("timer").textContent =
+        String(h).padStart(2, "0") + ":" +
+        String(m).padStart(2, "0") + ":" +
+        String(s).padStart(2, "0");
 }
 
 
@@ -231,85 +179,77 @@ function updateTimer(){
    시간 설정
 ========================= */
 
-function setTime(){
+function setTimer() {
 
-  stopTimer();
+    let h = Number(
+        document.getElementById("hours").value
+    );
 
-  const h =
-    Number(document.getElementById("hours").value) || 0;
+    let m = Number(
+        document.getElementById("minutes").value
+    );
 
-  const m =
-    Number(document.getElementById("minutes").value) || 0;
+    let s = Number(
+        document.getElementById("seconds").value
+    );
 
-  const s =
-    Number(document.getElementById("secs").value) || 0;
+    totalSeconds =
+        h * 3600 +
+        m * 60 +
+        s;
 
-  remainingSeconds =
-    h * 3600 + m * 60 + s;
+    remainingSeconds = totalSeconds;
 
-  updateTimer();
+    stopTimer();
+    updateDisplay();
 
-  statusText.textContent =
-    "⏱️ " +
-    formatTime(remainingSeconds) +
-    " 설정 완료";
-
+    document.getElementById("status").textContent =
+        "시간 설정 완료";
 }
 
 
 /* =========================
-   카운트다운 시작
+   타이머 시작
 ========================= */
 
-function startTimer(){
+function startTimer() {
 
-  if(running) return;
+    if (remainingSeconds <= 0) return;
 
-  if(remainingSeconds <= 0) return;
+    if (timerInterval !== null) return;
 
-  running = true;
+    timerInterval = setInterval(() => {
 
-  timerInterval =
-    setInterval(function(){
+        if (remainingSeconds > 0) {
 
-      if(remainingSeconds > 0){
+            remainingSeconds--;
 
-        remainingSeconds--;
+            updateDisplay();
 
-        updateTimer();
+        } else {
 
-      }
+            stopTimer();
 
-      if(remainingSeconds <= 0){
+            document.getElementById("status").textContent =
+                "⏰ 완료!";
+        }
 
-        stopTimer();
-
-        statusText.textContent =
-          "🏁 시간 종료!";
-
-      }
-
-    },1000);
-
+    }, 1000);
 }
 
 
 /* =========================
-   일시정지
+   타이머 정지
 ========================= */
 
-function stopTimer(){
+function stopTimer() {
 
-  running = false;
+    if (timerInterval !== null) {
 
-  if(timerInterval){
+        clearInterval(timerInterval);
 
-    clearInterval(timerInterval);
-
-    timerInterval = null;
-
-  }
-
+        timerInterval = null;
+    }
 }
 
 
@@ -317,255 +257,277 @@ function stopTimer(){
    초기화
 ========================= */
 
-function resetTimer(){
+function resetTimer() {
 
-  stopTimer();
+    stopTimer();
 
-  const h =
-    Number(document.getElementById("hours").value) || 0;
+    remainingSeconds = totalSeconds;
 
-  const m =
-    Number(document.getElementById("minutes").value) || 0;
+    isUp = false;
 
-  const s =
-    Number(document.getElementById("secs").value) || 0;
+    updateDisplay();
 
-  remainingSeconds =
-    h * 3600 + m * 60 + s;
-
-  upCount = 0;
-
-  downCount = 0;
-
-  updateTimer();
-
-  statusText.textContent =
-    "🔄 초기화 완료";
-
+    document.getElementById("status").textContent =
+        "초기화됨";
 }
 
 
 /* =========================
-   카메라
+   센서 시작
 ========================= */
 
-async function startCamera(){
+async function startSensors() {
 
-  try{
+    try {
 
-    statusText.textContent =
-      "🟡 카메라 준비 중...";
+        /*
+         iPhone Safari 센서 권한 요청
+        */
+
+        if (
+            typeof DeviceMotionEvent !== "undefined" &&
+            typeof DeviceMotionEvent.requestPermission === "function"
+        ) {
+
+            const motionPermission =
+                await DeviceMotionEvent.requestPermission();
+
+            if (motionPermission !== "granted") {
+
+                alert(
+                    "가속도 센서 권한을 허용해주세요."
+                );
+
+                return;
+            }
+        }
 
 
-    if(typeof FaceDetection === "undefined"){
+        if (
+            typeof DeviceOrientationEvent !== "undefined" &&
+            typeof DeviceOrientationEvent.requestPermission === "function"
+        ) {
 
-      throw new Error(
-        "얼굴 인식 라이브러리를 불러오지 못했습니다."
-      );
+            const orientationPermission =
+                await DeviceOrientationEvent.requestPermission();
+
+            if (orientationPermission !== "granted") {
+
+                alert(
+                    "기울기 센서 권한을 허용해주세요."
+                );
+
+                return;
+            }
+        }
+
+
+        window.addEventListener(
+            "devicemotion",
+            handleMotion,
+            true
+        );
+
+        window.addEventListener(
+            "deviceorientation",
+            handleOrientation,
+            true
+        );
+
+        sensorStarted = true;
+
+        document.getElementById("status").textContent =
+            "📱 센서 작동 중";
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById("status").textContent =
+            "센서를 사용할 수 없습니다.";
 
     }
-
-
-    const stream =
-      await navigator.mediaDevices.getUserMedia({
-
-        video:{
-          facingMode:"user",
-          width:{
-            ideal:640
-          },
-          height:{
-            ideal:480
-          }
-        },
-
-        audio:false
-
-      });
-
-
-    video.srcObject = stream;
-
-
-    await video.play();
-
-
-    statusText.textContent =
-      "🟡 얼굴 인식 준비 중...";
-
-
-    startFaceDetection();
-
-
-  }catch(error){
-
-    console.error(error);
-
-    statusText.textContent =
-      "❌ 카메라는 작동하지만 얼굴 인식 오류";
-
-  }
-
 }
 
 
 /* =========================
-   얼굴 인식
+   가속도 센서
 ========================= */
 
-function startFaceDetection(){
+function handleMotion(event) {
 
-  if(detectorStarted) return;
+    let acc =
+        event.accelerationIncludingGravity;
 
-  detectorStarted = true;
+    if (!acc) return;
 
-
-  const faceDetection =
-    new FaceDetection({
-
-      locateFile:function(file){
-
-        return "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/" + file;
-
-      }
-
-    });
-
-
-  faceDetection.setOptions({
-
-    model:"short",
-
-    minDetectionConfidence:0.5
-
-  });
-
-
-  faceDetection.onResults(function(results){
-
-
-    /* 얼굴이 안 보임 */
-
-    if(
-      !results.detections ||
-      results.detections.length === 0
-    ){
-
-      upCount = 0;
-
-      downCount = 0;
-
-      stopTimer();
-
-      statusText.textContent =
-        "🔴 얼굴을 찾는 중...";
-
-      return;
-
-    }
-
-
-    /* 얼굴 발견 */
-
-    const box =
-      results.detections[0].boundingBox;
-
-
-    const centerY =
-      box.yCenter;
+    acceleration.x = acc.x || 0;
+    acceleration.y = acc.y || 0;
+    acceleration.z = acc.z || 0;
 
 
     /*
-      얼굴 중심이 아래쪽이면
-      휴대폰이 머리 위에 있다고 판단
+       전체 가속도 크기 계산
     */
 
-    if(centerY > 0.55){
-
-      downCount = 0;
-
-      upCount++;
-
-
-      if(upCount >= REQUIRED_COUNT){
-
-        startTimer();
-
-        statusText.textContent =
-          "🟢 머리 위 → 카운트다운";
-
-      }else{
-
-        statusText.textContent =
-          "🟡 머리 위 확인 중...";
-
-      }
-
-    }else{
-
-      upCount = 0;
-
-      downCount++;
+    let magnitude = Math.sqrt(
+        acceleration.x * acceleration.x +
+        acceleration.y * acceleration.y +
+        acceleration.z * acceleration.z
+    );
 
 
-      if(downCount >= REQUIRED_COUNT){
+    /*
+       이전 값과 비교해서 움직임 감지
+    */
 
-        stopTimer();
+    let change =
+        Math.abs(magnitude - lastMagnitude);
 
-        statusText.textContent =
-          "🔴 아래 → 일시정지";
-
-      }else{
-
-        statusText.textContent =
-          "🟡 일시정지 확인 중...";
-
-      }
-
-    }
-
-  });
+    lastMagnitude = magnitude;
 
 
-  /* 얼굴 인식 반복 */
+    /*
+       움직임 점수 누적
+    */
 
-  async function detect(){
+    if (change > 1.5) {
 
-    try{
+        movementScore += 2;
 
-      if(video.readyState >= 2){
+    } else {
 
-        await faceDetection.send({
-          image:video
-        });
-
-      }
-
-    }catch(error){
-
-      console.error(error);
-
-      /*
-        일시적인 프레임 오류는
-        계속 다시 시도
-      */
-
+        movementScore *= 0.95;
     }
 
 
-    requestAnimationFrame(detect);
+    /*
+       센서 정보 표시
+    */
 
-  }
-
-
-  detect();
-
+    updateSensorDisplay(magnitude);
 }
 
 
-/* 처음 표시 */
+/* =========================
+   기울기 센서
+========================= */
 
-updateTimer();
+function handleOrientation(event) {
+
+    rotation.alpha =
+        event.alpha || 0;
+
+    rotation.beta =
+        event.beta || 0;
+
+    rotation.gamma =
+        event.gamma || 0;
+
+
+    /*
+       모자에 아이폰을 고정했을 때
+       위로 올라가는 동작을 감지하기 위한
+       기본적인 기울기 기준
+    */
+
+    let beta = rotation.beta;
+
+
+    /*
+       beta가 특정 범위를 넘으면
+       아이폰이 위쪽 방향으로 이동했다고 판단
+    */
+
+    if (beta > 55 && beta < 125) {
+
+        if (!isUp) {
+
+            isUp = true;
+
+            document.getElementById("status").innerHTML =
+                '<span class="up">⬆️ 위로 올라감 → 타이머 시작</span>';
+
+            startTimer();
+        }
+
+    } else {
+
+        if (isUp) {
+
+            isUp = false;
+
+            document.getElementById("status").innerHTML =
+                '<span class="down">⬇️ 내려감 → 타이머 일시정지</span>';
+
+            stopTimer();
+        }
+    }
+
+
+    updateSensorDisplay();
+}
+
+
+/* =========================
+   센서 정보 표시
+========================= */
+
+function updateSensorDisplay(magnitude) {
+
+    let text =
+        "가속도 X: " +
+        acceleration.x.toFixed(2) +
+        "<br>" +
+
+        "가속도 Y: " +
+        acceleration.y.toFixed(2) +
+        "<br>" +
+
+        "가속도 Z: " +
+        acceleration.z.toFixed(2) +
+        "<br><br>" +
+
+        "기울기 β: " +
+        rotation.beta.toFixed(1) +
+        "°" +
+        "<br>" +
+
+        "기울기 γ: " +
+        rotation.gamma.toFixed(1) +
+        "°" +
+        "<br>" +
+
+        "움직임 점수: " +
+        movementScore.toFixed(1);
+
+
+    if (isUp) {
+
+        text +=
+            "<br><br><span class='up'>" +
+            "⬆️ 현재 위쪽 상태" +
+            "</span>";
+
+    } else {
+
+        text +=
+            "<br><br><span class='down'>" +
+            "⬇️ 현재 아래쪽 상태" +
+            "</span>";
+    }
+
+
+    document.getElementById("sensorData").innerHTML =
+        text;
+}
+
+
+/* =========================
+   처음 화면
+========================= */
+
+updateDisplay();
 
 </script>
 
