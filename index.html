@@ -1,51 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>머리 위 타이머</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>머리 위 자동 타이머</title>
 
 <style>
-body{
-  margin:0;
-  background:#111;
-  color:white;
-  font-family:Arial,sans-serif;
-  text-align:center;
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
 }
 
-.container{
-  padding:25px 15px;
+.container {
+  padding: 20px 15px;
 }
 
-h1{
-  font-size:28px;
+h1 {
+  font-size: 26px;
 }
 
-#timer{
-  font-size:58px;
-  font-weight:bold;
-  margin:30px 0;
+#timer {
+  font-size: 58px;
+  font-weight: bold;
+  margin: 25px 0;
 }
 
-button{
-  font-size:18px;
-  padding:14px 20px;
-  margin:5px;
-  border:0;
-  border-radius:14px;
+button {
+  font-size: 18px;
+  padding: 14px 20px;
+  margin: 5px;
+  border: none;
+  border-radius: 14px;
 }
 
-video{
-  width:100%;
-  max-width:500px;
-  margin-top:20px;
-  border-radius:20px;
-  transform:scaleX(-1);
+#status {
+  font-size: 17px;
+  margin: 18px 0;
+  min-height: 25px;
 }
 
-#status{
-  font-size:18px;
-  margin:20px 0;
+video {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 20px;
+  margin-top: 10px;
+  transform: scaleX(-1);
 }
 </style>
 </head>
@@ -54,7 +56,7 @@ video{
 
 <div class="container">
 
-<h1>📱 머리 위 타이머</h1>
+<h1>📱 머리 위 자동 타이머</h1>
 
 <div id="timer">00:00:00</div>
 
@@ -63,57 +65,66 @@ video{
 
 <div id="status">카메라를 시작해주세요.</div>
 
-<video id="video" autoplay playsinline></video>
+<video id="video" autoplay playsinline muted></video>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/face_detection.js"></script>
 
 <script>
 
 let seconds = 0;
 let running = false;
-let interval = null;
+let timerInterval = null;
+let detectorStarted = false;
 
 const timer = document.getElementById("timer");
 const statusText = document.getElementById("status");
 const video = document.getElementById("video");
 
-function updateTimer(){
+
+function updateTimer() {
 
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
 
   timer.textContent =
-    String(h).padStart(2,"0") + ":" +
-    String(m).padStart(2,"0") + ":" +
-    String(s).padStart(2,"0");
+    String(h).padStart(2, "0") + ":" +
+    String(m).padStart(2, "0") + ":" +
+    String(s).padStart(2, "0");
 }
 
-function startTimer(){
 
-  if(running) return;
+function startTimer() {
+
+  if (running) return;
 
   running = true;
 
-  interval = setInterval(function(){
+  timerInterval = setInterval(function() {
+
     seconds++;
     updateTimer();
-  },1000);
+
+  }, 1000);
 }
 
-function stopTimer(){
+
+function stopTimer() {
 
   running = false;
 
-  if(interval){
-    clearInterval(interval);
-    interval = null;
+  if (timerInterval) {
+
+    clearInterval(timerInterval);
+    timerInterval = null;
+
   }
 }
 
-function resetTimer(){
+
+function resetTimer() {
 
   stopTimer();
 
@@ -122,52 +133,90 @@ function resetTimer(){
   updateTimer();
 
   statusText.textContent = "초기화되었습니다.";
+
 }
 
-async function startCamera(){
 
-  try{
+async function startCamera() {
+
+  try {
+
+    statusText.textContent = "🟡 카메라 준비 중...";
+
+    if (typeof FaceDetection === "undefined") {
+
+      throw new Error("얼굴 인식 기능을 불러오지 못했습니다.");
+
+    }
 
     const stream =
       await navigator.mediaDevices.getUserMedia({
-        video:{
-          facingMode:"user"
+
+        video: {
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 }
         },
-        audio:false
+
+        audio: false
+
       });
+
 
     video.srcObject = stream;
 
-    statusText.textContent =
-      "🟡 얼굴을 찾는 중...";
+    await video.play();
+
+    statusText.textContent = "🟡 얼굴 인식 준비 중...";
 
     startFaceDetection();
 
-  }catch(error){
+  }
+
+  catch (error) {
+
+    console.log(error);
 
     statusText.textContent =
-      "❌ 카메라 권한을 허용해주세요.";
+      "❌ 오류: " + error.message;
 
   }
+
 }
 
-function startFaceDetection(){
+
+function startFaceDetection() {
+
+  if (detectorStarted) return;
+
+  detectorStarted = true;
+
 
   const faceDetection = new FaceDetection({
-    locateFile: function(file){
-      return "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/" + file;
+
+    locateFile: function(file) {
+
+      return "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/" + file;
+
     }
+
   });
+
 
   faceDetection.setOptions({
-    model:"short",
-    minDetectionConfidence:0.5
+
+    model: "short",
+
+    minDetectionConfidence: 0.5
+
   });
 
-  faceDetection.onResults(function(results){
 
-    if(!results.detections ||
-       results.detections.length === 0){
+  faceDetection.onResults(function(results) {
+
+
+    if (!results.detections ||
+        results.detections.length === 0) {
 
       stopTimer();
 
@@ -175,55 +224,76 @@ function startFaceDetection(){
         "🔴 얼굴을 찾는 중...";
 
       return;
+
     }
+
 
     const box =
       results.detections[0].boundingBox;
 
-    const centerY =
-      box.yCenter;
+
+    const centerY = box.yCenter;
+
 
     /*
-      화면에서 얼굴 위치를 기준으로
-      휴대폰이 머리 위에 있는지를
-      판단하는 테스트 방식.
-
-      얼굴이 화면 아래쪽에 보이면
-      휴대폰이 머리 위에 있을 가능성이 높음.
+      얼굴 중심이 화면 아래쪽에 있으면
+      휴대폰이 머리 위에 있다고 판단
     */
 
-    if(centerY > 0.55){
+    if (centerY > 0.55) {
 
       startTimer();
 
       statusText.textContent =
-        "🟢 머리 위 감지 → 타이머 재개";
+        "🟢 머리 위 감지 → 타이머 실행";
 
-    }else{
+    }
+
+    else {
 
       stopTimer();
 
       statusText.textContent =
-        "🔴 머리 아래 → 타이머 일시정지";
+        "🔴 머리 아래 → 타이머 정지";
+
     }
 
   });
 
-  async function detect(){
 
-    if(video.readyState >= 2){
+  async function detect() {
 
-      await faceDetection.send({
-        image:video
-      });
+    try {
+
+      if (video.readyState >= 2) {
+
+        await faceDetection.send({
+          image: video
+        });
+
+      }
 
     }
 
+    catch (error) {
+
+      console.log(error);
+
+      statusText.textContent =
+        "❌ 얼굴 인식 오류";
+
+    }
+
+
     requestAnimationFrame(detect);
+
   }
 
+
   detect();
+
 }
+
 
 updateTimer();
 
