@@ -2,12 +2,14 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <title>모자 아이폰 자동 타이머</title>
 
 <style>
+
 * {
     box-sizing: border-box;
 }
@@ -18,10 +20,11 @@ body {
     color: white;
     font-family: Arial, sans-serif;
     min-height: 100vh;
+    text-align: center;
+
     display: flex;
     justify-content: center;
     align-items: center;
-    text-align: center;
 }
 
 .container {
@@ -30,13 +33,14 @@ body {
 }
 
 h1 {
-    font-size: 28px;
+    font-size: 26px;
+    margin: 5px 0 10px;
 }
 
 #timer {
-    font-size: 70px;
+    font-size: clamp(50px, 10vw, 90px);
     font-weight: bold;
-    margin: 20px 0;
+    margin: 10px 0 20px;
 }
 
 .inputs {
@@ -57,25 +61,54 @@ input {
 button {
     width: 100%;
     max-width: 500px;
-    padding: 15px;
-    margin: 6px 0;
+    padding: 13px;
+    margin: 5px 0;
     border: none;
     border-radius: 12px;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: bold;
 }
 
 #status {
-    margin: 15px 0;
-    font-size: 20px;
+    margin: 12px 0;
+    font-size: 19px;
 }
 
 #sensorData {
-    margin-top: 15px;
-    padding: 15px;
+    margin-top: 10px;
+    padding: 12px;
     background: #222;
     border-radius: 12px;
-    line-height: 1.7;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+
+/* 세로 화면 */
+
+@media (orientation: portrait) {
+
+    .container {
+        display: none;
+    }
+
+    body::before {
+        content: "📱 아이폰을 가로로 돌려주세요";
+        position: fixed;
+        inset: 0;
+
+        background: #111;
+        color: white;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        font-size: 24px;
+        font-weight: bold;
+
+        z-index: 9999;
+    }
 }
 
 .up {
@@ -85,6 +118,7 @@ button {
 .down {
     color: #ff6666;
 }
+
 </style>
 </head>
 
@@ -94,118 +128,206 @@ button {
 
 <h1>📱 모자 아이폰 자동 타이머</h1>
 
-<div id="timer">00:00:00</div>
+<div id="timer">
+00:00:00
+</div>
+
 
 <div class="inputs">
-    <input id="hours" type="number" min="0" value="0" placeholder="시">
-    <input id="minutes" type="number" min="0" max="59" value="1" placeholder="분">
-    <input id="seconds" type="number" min="0" max="59" value="0" placeholder="초">
+
+<input
+id="hours"
+type="number"
+min="0"
+value="0"
+placeholder="시">
+
+<input
+id="minutes"
+type="number"
+min="0"
+max="59"
+value="1"
+placeholder="분">
+
+<input
+id="seconds"
+type="number"
+min="0"
+max="59"
+value="0"
+placeholder="초">
+
 </div>
 
-<button onclick="setTimer()">⏱️ 시간 설정</button>
 
-<button onclick="startSensors()">📱 센서 시작</button>
+<button onclick="setTimer()">
+⏱️ 시간 설정
+</button>
 
-<button onclick="calibrate()">📐 현재 자세를 기준으로 저장</button>
 
-<button onclick="resetTimer()">🔄 초기화</button>
+<button onclick="startSensors()">
+📱 센서 시작
+</button>
+
+
+<button onclick="calibrate()">
+📐 현재 자세를 기준으로 저장
+</button>
+
+
+<button onclick="resetTimer()">
+🔄 초기화
+</button>
+
 
 <div id="status">
-    먼저 센서를 시작해주세요
+먼저 센서를 시작해주세요
 </div>
+
 
 <div id="sensorData">
-    기준 자세: 아직 없음<br>
-    현재 β: -
+
+기준 자세: 아직 없음<br>
+현재 β: -
+
 </div>
 
 </div>
+
 
 <script>
 
+
+/* =========================
+   변수
+========================= */
+
 let remainingSeconds = 0;
+
 let timerInterval = null;
 
 let sensorStarted = false;
 
-/* 현재 기울기 */
+
 let currentBeta = 0;
+
 let currentGamma = 0;
 
-/* 기준 기울기 */
+
 let baseBeta = null;
+
 let baseGamma = null;
 
-/*
-    기준 자세에서 얼마나 움직였는지
-*/
+
 let angleDifference = 0;
-
-/*
-    이 값 이상 움직이면 "위로 올라감"
-    필요하면 나중에 조절
-*/
-const UP_THRESHOLD = 18;
-
-/*
-    다시 기준 자세 근처로 돌아오면 내려온 것으로 판단
-*/
-const DOWN_THRESHOLD = 10;
 
 let isUp = false;
 
 
+/*
+    기준 자세에서
+    18도 이상 움직이면 올라감
+*/
+
+const UP_THRESHOLD = 18;
+
+
+/*
+    10도 이하로 돌아오면
+    내려온 것으로 판단
+*/
+
+const DOWN_THRESHOLD = 10;
+
+
+
 /* =========================
-   타이머
+   타이머 설정
 ========================= */
 
 function setTimer() {
 
     const h =
-        Number(document.getElementById("hours").value) || 0;
+        Number(
+            document.getElementById("hours").value
+        ) || 0;
+
 
     const m =
-        Number(document.getElementById("minutes").value) || 0;
+        Number(
+            document.getElementById("minutes").value
+        ) || 0;
+
 
     const s =
-        Number(document.getElementById("seconds").value) || 0;
+        Number(
+            document.getElementById("seconds").value
+        ) || 0;
+
 
     remainingSeconds =
         h * 3600 +
         m * 60 +
         s;
 
+
     stopTimer();
+
     updateDisplay();
+
 
     document.getElementById("status").textContent =
         "시간 설정 완료";
 }
 
 
+
+/* =========================
+   화면 표시
+========================= */
+
 function updateDisplay() {
 
     const h =
-        Math.floor(remainingSeconds / 3600);
+        Math.floor(
+            remainingSeconds / 3600
+        );
+
 
     const m =
-        Math.floor((remainingSeconds % 3600) / 60);
+        Math.floor(
+            (remainingSeconds % 3600) / 60
+        );
+
 
     const s =
         remainingSeconds % 60;
 
+
     document.getElementById("timer").textContent =
-        String(h).padStart(2, "0") + ":" +
-        String(m).padStart(2, "0") + ":" +
+
+        String(h).padStart(2, "0") +
+        ":" +
+
+        String(m).padStart(2, "0") +
+        ":" +
+
         String(s).padStart(2, "0");
 }
 
+
+
+/* =========================
+   타이머 시작
+========================= */
 
 function startTimer() {
 
     if (remainingSeconds <= 0) return;
 
     if (timerInterval !== null) return;
+
 
     timerInterval = setInterval(() => {
 
@@ -215,7 +337,9 @@ function startTimer() {
 
             updateDisplay();
 
-        } else {
+        }
+
+        else {
 
             stopTimer();
 
@@ -227,6 +351,11 @@ function startTimer() {
 }
 
 
+
+/* =========================
+   타이머 정지
+========================= */
+
 function stopTimer() {
 
     if (timerInterval !== null) {
@@ -237,6 +366,11 @@ function stopTimer() {
     }
 }
 
+
+
+/* =========================
+   초기화
+========================= */
 
 function resetTimer() {
 
@@ -251,13 +385,19 @@ function resetTimer() {
 }
 
 
+
 /* =========================
-   센서 권한
+   센서 시작
 ========================= */
 
 async function startSensors() {
 
     try {
+
+
+        /*
+            iPhone 가속도 센서 권한
+        */
 
         if (
             typeof DeviceMotionEvent !== "undefined" &&
@@ -267,14 +407,22 @@ async function startSensors() {
             const permission =
                 await DeviceMotionEvent.requestPermission();
 
+
             if (permission !== "granted") {
 
-                alert("가속도 센서 권한을 허용해주세요.");
+                alert(
+                    "가속도 센서 권한을 허용해주세요."
+                );
 
                 return;
             }
         }
 
+
+
+        /*
+            iPhone 기울기 센서 권한
+        */
 
         if (
             typeof DeviceOrientationEvent !== "undefined" &&
@@ -284,14 +432,22 @@ async function startSensors() {
             const permission =
                 await DeviceOrientationEvent.requestPermission();
 
+
             if (permission !== "granted") {
 
-                alert("기울기 센서 권한을 허용해주세요.");
+                alert(
+                    "기울기 센서 권한을 허용해주세요."
+                );
 
                 return;
             }
         }
 
+
+
+        /*
+            센서 이벤트 등록
+        */
 
         window.addEventListener(
             "deviceorientation",
@@ -299,12 +455,16 @@ async function startSensors() {
             true
         );
 
+
         sensorStarted = true;
 
-        document.getElementById("status").textContent =
-            "📱 센서 작동 중 — 모자에 장착하세요";
 
-    } catch (error) {
+        document.getElementById("status").textContent =
+            "📱 센서 작동 중";
+
+    }
+
+    catch (error) {
 
         console.error(error);
 
@@ -312,6 +472,7 @@ async function startSensors() {
             "센서를 사용할 수 없습니다.";
     }
 }
+
 
 
 /* =========================
@@ -322,18 +483,28 @@ function calibrate() {
 
     if (!sensorStarted) {
 
-        alert("먼저 센서를 시작해주세요.");
+        alert(
+            "먼저 센서를 시작해주세요."
+        );
 
         return;
     }
 
 
+    /*
+        현재 아이폰 자세를
+        기준으로 저장
+    */
+
     baseBeta = currentBeta;
+
     baseGamma = currentGamma;
+
 
     isUp = false;
 
     stopTimer();
+
 
     document.getElementById("status").innerHTML =
         '<span class="up">📐 기준 자세 저장 완료!</span>';
@@ -341,6 +512,7 @@ function calibrate() {
 
     updateSensorDisplay();
 }
+
 
 
 /* =========================
@@ -351,13 +523,19 @@ function handleOrientation(event) {
 
     if (event.beta === null) return;
 
-    currentBeta = event.beta || 0;
-    currentGamma = event.gamma || 0;
+
+    currentBeta =
+        event.beta || 0;
+
+
+    currentGamma =
+        event.gamma || 0;
+
 
 
     /*
-        기준 자세가 아직 없으면
-        아무 동작도 하지 않음
+        기준 자세가 없으면
+        감지만 하고 타이머는 작동하지 않음
     */
 
     if (baseBeta === null) {
@@ -368,6 +546,7 @@ function handleOrientation(event) {
     }
 
 
+
     /*
         기준 자세와 현재 자세의 차이
     */
@@ -375,8 +554,10 @@ function handleOrientation(event) {
     const betaDifference =
         currentBeta - baseBeta;
 
+
     const gammaDifference =
         currentGamma - baseGamma;
+
 
 
     /*
@@ -385,13 +566,18 @@ function handleOrientation(event) {
 
     angleDifference =
         Math.sqrt(
-            betaDifference * betaDifference +
-            gammaDifference * gammaDifference
+
+            betaDifference *
+            betaDifference +
+
+            gammaDifference *
+            gammaDifference
         );
 
 
+
     /*
-        위로 올라간 상태
+        위로 올라감
     */
 
     if (
@@ -401,15 +587,18 @@ function handleOrientation(event) {
 
         isUp = true;
 
+
         document.getElementById("status").innerHTML =
             '<span class="up">⬆️ 올라감 → 타이머 시작</span>';
+
 
         startTimer();
     }
 
 
+
     /*
-        다시 내려온 상태
+        다시 내려옴
     */
 
     if (
@@ -419,27 +608,43 @@ function handleOrientation(event) {
 
         isUp = false;
 
+
         document.getElementById("status").innerHTML =
             '<span class="down">⬇️ 내려옴 → 타이머 일시정지</span>';
 
+
         stopTimer();
     }
+
 
 
     updateSensorDisplay();
 }
 
 
+
 /* =========================
-   화면 표시
+   센서 정보
 ========================= */
 
 function updateSensorDisplay() {
 
-    let baseText =
+    const baseText =
+
         baseBeta === null
+
         ? "아직 없음"
+
         : baseBeta.toFixed(1) + "°";
+
+
+    const baseGammaText =
+
+        baseGamma === null
+
+        ? "-"
+
+        : baseGamma.toFixed(1) + "°";
 
 
     document.getElementById("sensorData").innerHTML =
@@ -456,11 +661,7 @@ function updateSensorDisplay() {
         "<br>" +
 
         "기준 γ: " +
-        (
-            baseGamma === null
-            ? "-"
-            : baseGamma.toFixed(1) + "°"
-        ) +
+        baseGammaText +
 
         "<br>" +
 
@@ -468,27 +669,32 @@ function updateSensorDisplay() {
         currentGamma.toFixed(1) +
         "°" +
 
-        "<br><br>" +
+        "<br>" +
 
         "기울기 변화: " +
         angleDifference.toFixed(1) +
         "°" +
 
-        "<br>" +
-
-        "감지 기준: " +
-        UP_THRESHOLD +
-        "°" +
-
         "<br><br>" +
 
         (
+
             isUp
-            ? '<span class="up">⬆️ 위로 올라간 상태</span>'
-            : '<span class="down">⬇️ 내려온 상태</span>'
+
+            ?
+
+            '<span class="up">⬆️ 위로 올라간 상태</span>'
+
+            :
+
+            '<span class="down">⬇️ 내려온 상태</span>'
         );
 }
 
+
+/* =========================
+   시작
+========================= */
 
 updateDisplay();
 
