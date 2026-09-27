@@ -14,49 +14,44 @@
 html,body{
   margin:0;
   width:100%;
-  height:100%;
+  min-height:100%;
   background:#111;
   color:white;
   font-family:Arial,sans-serif;
 }
 
 body{
-  overflow:hidden;
+  text-align:center;
 }
 
 .container{
   width:100%;
-  height:100vh;
+  min-height:100vh;
   padding:12px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
 }
 
 h1{
-  margin:2px 0 8px;
+  margin:4px 0 8px;
   font-size:24px;
 }
 
 .settings{
   display:flex;
-  align-items:center;
   justify-content:center;
   gap:8px;
 }
 
 input{
-  width:70px;
-  height:45px;
+  width:75px;
+  height:44px;
   border:0;
   border-radius:10px;
   text-align:center;
-  font-size:22px;
+  font-size:20px;
 }
 
 .labels{
-  font-size:14px;
-  margin-bottom:5px;
+  margin:3px 0;
 }
 
 #timer{
@@ -66,46 +61,47 @@ input{
 }
 
 button{
+  font-size:16px;
+  padding:11px 15px;
+  margin:3px;
   border:0;
   border-radius:12px;
-  padding:11px 16px;
-  margin:3px;
-  font-size:16px;
 }
 
 #status{
   min-height:25px;
-  margin:5px;
+  margin:7px;
   font-size:16px;
 }
 
 video{
   width:min(80vw,700px);
-  height:auto;
-  max-height:48vh;
-  object-fit:cover;
+  max-height:50vh;
   border-radius:18px;
+  object-fit:cover;
   transform:scaleX(-1);
 }
 
-/* 세로로 들고 있을 때 안내 */
-#rotateMessage{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:#111;
-  color:white;
-  z-index:99;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  font-size:24px;
-  padding:30px;
-}
+/* 가로 화면에서 보기 좋게 */
+@media (orientation: landscape){
 
-@media (orientation: portrait){
-  #rotateMessage{
-    display:flex;
+  .container{
+    padding:8px;
+  }
+
+  h1{
+    font-size:20px;
+    margin:2px;
+  }
+
+  #timer{
+    font-size:48px;
+    margin:4px;
+  }
+
+  video{
+    width:min(70vw,650px);
+    max-height:55vh;
   }
 }
 
@@ -114,203 +110,308 @@ video{
 
 <body>
 
-<div id="rotateMessage">
-  📱<br><br>
-  아이폰을 가로로 돌려주세요
-</div>
-
 <div class="container">
 
 <h1>📱 머리 위 자동 카운트다운</h1>
 
 <div class="settings">
 
-<input id="hours" type="number" min="0" value="0">
+<input id="hours"
+       type="number"
+       min="0"
+       value="0">
 
-<input id="minutes" type="number" min="0" value="0">
+<input id="minutes"
+       type="number"
+       min="0"
+       value="0">
 
-<input id="secs" type="number" min="0" value="30">
+<input id="secs"
+       type="number"
+       min="0"
+       value="30">
 
 </div>
 
 <div class="labels">
-시　　분　　초
+시　 분　 초
 </div>
 
-<div id="timer">00:00:30</div>
-
-<div>
-<button onclick="setTime()">⏱️ 시간 설정</button>
-<button onclick="startCamera()">📷 카메라 시작</button>
-<button onclick="resetTimer()">🔄 초기화</button>
+<div id="timer">
+00:00:30
 </div>
+
+<button onclick="setTime()">
+⏱️ 시간 설정
+</button>
+
+<button onclick="startCamera()">
+📷 카메라 시작
+</button>
+
+<button onclick="resetTimer()">
+🔄 초기화
+</button>
 
 <div id="status">
 시간을 설정해주세요.
 </div>
 
-<video id="video" autoplay playsinline muted></video>
+<video id="video"
+       autoplay
+       playsinline
+       muted>
+</video>
 
 </div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/face_detection.js"></script>
 
+
 <script>
 
 let remainingSeconds = 30;
+
 let running = false;
+
 let timerInterval = null;
+
 let detectorStarted = false;
 
 let upCount = 0;
+
 let downCount = 0;
 
 const REQUIRED_COUNT = 8;
 
-const timer = document.getElementById("timer");
-const statusText = document.getElementById("status");
-const video = document.getElementById("video");
+const timer =
+document.getElementById("timer");
 
+const statusText =
+document.getElementById("status");
+
+const video =
+document.getElementById("video");
+
+
+/* =========================
+   시간 표시
+========================= */
 
 function formatTime(seconds){
 
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
+  const h =
+    Math.floor(seconds / 3600);
 
-  return String(h).padStart(2,"0") + ":" +
-         String(m).padStart(2,"0") + ":" +
-         String(s).padStart(2,"0");
+  const m =
+    Math.floor((seconds % 3600) / 60);
+
+  const s =
+    seconds % 60;
+
+  return String(h).padStart(2,"0")
+    + ":" +
+    String(m).padStart(2,"0")
+    + ":" +
+    String(s).padStart(2,"0");
+
 }
 
 
 function updateTimer(){
 
-  timer.textContent = formatTime(remainingSeconds);
+  timer.textContent =
+    formatTime(remainingSeconds);
 
 }
 
+
+/* =========================
+   시간 설정
+========================= */
 
 function setTime(){
 
   stopTimer();
 
-  const h = Number(document.getElementById("hours").value) || 0;
-  const m = Number(document.getElementById("minutes").value) || 0;
-  const s = Number(document.getElementById("secs").value) || 0;
+  const h =
+    Number(document.getElementById("hours").value) || 0;
 
-  remainingSeconds = h * 3600 + m * 60 + s;
+  const m =
+    Number(document.getElementById("minutes").value) || 0;
+
+  const s =
+    Number(document.getElementById("secs").value) || 0;
+
+  remainingSeconds =
+    h * 3600 + m * 60 + s;
 
   updateTimer();
 
   statusText.textContent =
-    "⏱️ " + formatTime(remainingSeconds) + " 설정 완료";
+    "⏱️ " +
+    formatTime(remainingSeconds) +
+    " 설정 완료";
+
 }
 
+
+/* =========================
+   카운트다운 시작
+========================= */
 
 function startTimer(){
 
-  if(running || remainingSeconds <= 0) return;
+  if(running) return;
+
+  if(remainingSeconds <= 0) return;
 
   running = true;
 
-  timerInterval = setInterval(function(){
+  timerInterval =
+    setInterval(function(){
 
-    if(remainingSeconds > 0){
+      if(remainingSeconds > 0){
 
-      remainingSeconds--;
+        remainingSeconds--;
 
-      updateTimer();
+        updateTimer();
 
-    }
+      }
 
-    if(remainingSeconds <= 0){
+      if(remainingSeconds <= 0){
 
-      stopTimer();
+        stopTimer();
 
-      statusText.textContent = "🏁 시간 종료!";
+        statusText.textContent =
+          "🏁 시간 종료!";
 
-    }
+      }
 
-  },1000);
+    },1000);
+
 }
 
+
+/* =========================
+   일시정지
+========================= */
 
 function stopTimer(){
 
   running = false;
 
-  if(timerInterval !== null){
+  if(timerInterval){
 
     clearInterval(timerInterval);
+
     timerInterval = null;
 
   }
+
 }
 
+
+/* =========================
+   초기화
+========================= */
 
 function resetTimer(){
 
   stopTimer();
 
-  const h = Number(document.getElementById("hours").value) || 0;
-  const m = Number(document.getElementById("minutes").value) || 0;
-  const s = Number(document.getElementById("secs").value) || 0;
+  const h =
+    Number(document.getElementById("hours").value) || 0;
 
-  remainingSeconds = h * 3600 + m * 60 + s;
+  const m =
+    Number(document.getElementById("minutes").value) || 0;
+
+  const s =
+    Number(document.getElementById("secs").value) || 0;
+
+  remainingSeconds =
+    h * 3600 + m * 60 + s;
 
   upCount = 0;
+
   downCount = 0;
 
   updateTimer();
 
-  statusText.textContent = "🔄 초기화 완료";
+  statusText.textContent =
+    "🔄 초기화 완료";
 
 }
 
+
+/* =========================
+   카메라
+========================= */
 
 async function startCamera(){
 
   try{
 
-    statusText.textContent = "🟡 카메라 준비 중...";
+    statusText.textContent =
+      "🟡 카메라 준비 중...";
+
 
     if(typeof FaceDetection === "undefined"){
 
-      throw new Error("얼굴 인식 기능을 불러오지 못했습니다.");
+      throw new Error(
+        "얼굴 인식 라이브러리를 불러오지 못했습니다."
+      );
 
     }
 
+
     const stream =
       await navigator.mediaDevices.getUserMedia({
+
         video:{
           facingMode:"user",
-          width:{ideal:1280},
-          height:{ideal:720}
+          width:{
+            ideal:640
+          },
+          height:{
+            ideal:480
+          }
         },
+
         audio:false
+
       });
+
 
     video.srcObject = stream;
 
+
     await video.play();
 
-    statusText.textContent = "🟡 얼굴 인식 중...";
+
+    statusText.textContent =
+      "🟡 얼굴 인식 준비 중...";
+
 
     startFaceDetection();
+
 
   }catch(error){
 
     console.error(error);
 
     statusText.textContent =
-      "❌ 오류: " + error.message;
+      "❌ 카메라는 작동하지만 얼굴 인식 오류";
 
   }
 
 }
 
+
+/* =========================
+   얼굴 인식
+========================= */
 
 function startFaceDetection(){
 
@@ -318,15 +419,17 @@ function startFaceDetection(){
 
   detectorStarted = true;
 
-  const faceDetection = new FaceDetection({
 
-    locateFile:function(file){
+  const faceDetection =
+    new FaceDetection({
 
-      return "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/" + file;
+      locateFile:function(file){
 
-    }
+        return "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/" + file;
 
-  });
+      }
+
+    });
 
 
   faceDetection.setOptions({
@@ -340,10 +443,16 @@ function startFaceDetection(){
 
   faceDetection.onResults(function(results){
 
-    if(!results.detections ||
-       results.detections.length === 0){
+
+    /* 얼굴이 안 보임 */
+
+    if(
+      !results.detections ||
+      results.detections.length === 0
+    ){
 
       upCount = 0;
+
       downCount = 0;
 
       stopTimer();
@@ -356,25 +465,34 @@ function startFaceDetection(){
     }
 
 
+    /* 얼굴 발견 */
+
     const box =
       results.detections[0].boundingBox;
 
-    const centerY = box.yCenter;
+
+    const centerY =
+      box.yCenter;
 
 
-    /* 얼굴이 화면 아래쪽이면 머리 위로 판단 */
+    /*
+      얼굴 중심이 아래쪽이면
+      휴대폰이 머리 위에 있다고 판단
+    */
 
     if(centerY > 0.55){
 
       downCount = 0;
+
       upCount++;
+
 
       if(upCount >= REQUIRED_COUNT){
 
         startTimer();
 
         statusText.textContent =
-          "🟢 머리 위 → 카운트다운 실행";
+          "🟢 머리 위 → 카운트다운";
 
       }else{
 
@@ -386,7 +504,9 @@ function startFaceDetection(){
     }else{
 
       upCount = 0;
+
       downCount++;
+
 
       if(downCount >= REQUIRED_COUNT){
 
@@ -407,6 +527,8 @@ function startFaceDetection(){
   });
 
 
+  /* 얼굴 인식 반복 */
+
   async function detect(){
 
     try{
@@ -423,19 +545,25 @@ function startFaceDetection(){
 
       console.error(error);
 
-      statusText.textContent =
-        "❌ 얼굴 인식 오류";
+      /*
+        일시적인 프레임 오류는
+        계속 다시 시도
+      */
 
     }
+
 
     requestAnimationFrame(detect);
 
   }
 
+
   detect();
 
 }
 
+
+/* 처음 표시 */
 
 updateTimer();
 
