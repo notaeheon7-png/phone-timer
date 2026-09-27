@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>휴대폰 타이머</title>
+
+<style>
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.container {
+  padding: 30px 15px;
+}
+
+#timer {
+  font-size: 56px;
+  font-weight: bold;
+  margin: 35px 0;
+}
+
+button {
+  font-size: 18px;
+  padding: 14px 20px;
+  margin: 5px;
+  border: none;
+  border-radius: 12px;
+}
+
+video {
+  width: 100%;
+  max-width: 500px;
+  margin-top: 25px;
+  border-radius: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📱 머리 위 타이머</h1>
+
+<div id="timer">00:00:00</div>
+
+<button onclick="startCamera()">📷 카메라 시작</button>
+<button onclick="resetTimer()">🔄 초기화</button>
+
+<p id="status">카메라를 시작해주세요.</p>
+
+<video id="video" autoplay playsinline></video>
+
+</div>
+
+<script>
+
+let seconds = 0;
+let timerRunning = false;
+let timerInterval = null;
+
+function updateTimer() {
+
+  let hours = Math.floor(seconds / 3600);
+  let minutes = Math.floor((seconds % 3600) / 60);
+  let secs = seconds % 60;
+
+  document.getElementById("timer").textContent =
+    String(hours).padStart(2,"0") + ":" +
+    String(minutes).padStart(2,"0") + ":" +
+    String(secs).padStart(2,"0");
+}
+
+function startTimer() {
+
+  if (timerRunning) return;
+
+  timerRunning = true;
+
+  timerInterval = setInterval(function() {
+    seconds++;
+    updateTimer();
+  },1000);
+}
+
+function stopTimer() {
+
+  timerRunning = false;
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function resetTimer() {
+
+  stopTimer();
+
+  seconds = 0;
+
+  updateTimer();
+
+  document.getElementById("status").textContent =
+    "초기화되었습니다.";
+}
+
+async function startCamera() {
+
+  try {
+
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user"
+        },
+        audio: false
+      });
+
+    document.getElementById("video").srcObject = stream;
+
+    document.getElementById("status").textContent =
+      "🟢 카메라 작동 중";
+
+  } catch(error) {
+
+    document.getElementById("status").textContent =
+      "❌ 카메라를 사용할 수 없습니다.";
+
+  }
+}
+
+updateTimer();
+
+</script>
+
+</body>
+</html>
