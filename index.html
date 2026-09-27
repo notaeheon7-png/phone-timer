@@ -2,40 +2,50 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>휴대폰 타이머</title>
+<title>머리 위 타이머</title>
 
 <style>
-body {
-  margin: 0;
-  background: #111;
-  color: white;
-  font-family: Arial, sans-serif;
-  text-align: center;
+body{
+  margin:0;
+  background:#111;
+  color:white;
+  font-family:Arial,sans-serif;
+  text-align:center;
 }
 
-.container {
-  padding: 30px 15px;
+.container{
+  padding:25px 15px;
 }
 
-#timer {
-  font-size: 56px;
-  font-weight: bold;
-  margin: 35px 0;
+h1{
+  font-size:28px;
 }
 
-button {
-  font-size: 18px;
-  padding: 14px 20px;
-  margin: 5px;
-  border: none;
-  border-radius: 12px;
+#timer{
+  font-size:58px;
+  font-weight:bold;
+  margin:30px 0;
 }
 
-video {
-  width: 100%;
-  max-width: 500px;
-  margin-top: 25px;
-  border-radius: 20px;
+button{
+  font-size:18px;
+  padding:14px 20px;
+  margin:5px;
+  border:0;
+  border-radius:14px;
+}
+
+video{
+  width:100%;
+  max-width:500px;
+  margin-top:20px;
+  border-radius:20px;
+  transform:scaleX(-1);
+}
+
+#status{
+  font-size:18px;
+  margin:20px 0;
 }
 </style>
 </head>
@@ -51,50 +61,59 @@ video {
 <button onclick="startCamera()">📷 카메라 시작</button>
 <button onclick="resetTimer()">🔄 초기화</button>
 
-<p id="status">카메라를 시작해주세요.</p>
+<div id="status">카메라를 시작해주세요.</div>
 
 <video id="video" autoplay playsinline></video>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"></script>
+
 <script>
 
 let seconds = 0;
-let timerRunning = false;
-let timerInterval = null;
+let running = false;
+let interval = null;
 
-function updateTimer() {
+const timer = document.getElementById("timer");
+const statusText = document.getElementById("status");
+const video = document.getElementById("video");
 
-  let hours = Math.floor(seconds / 3600);
-  let minutes = Math.floor((seconds % 3600) / 60);
-  let secs = seconds % 60;
+function updateTimer(){
 
-  document.getElementById("timer").textContent =
-    String(hours).padStart(2,"0") + ":" +
-    String(minutes).padStart(2,"0") + ":" +
-    String(secs).padStart(2,"0");
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  timer.textContent =
+    String(h).padStart(2,"0") + ":" +
+    String(m).padStart(2,"0") + ":" +
+    String(s).padStart(2,"0");
 }
 
-function startTimer() {
+function startTimer(){
 
-  if (timerRunning) return;
+  if(running) return;
 
-  timerRunning = true;
+  running = true;
 
-  timerInterval = setInterval(function() {
+  interval = setInterval(function(){
     seconds++;
     updateTimer();
   },1000);
 }
 
-function stopTimer() {
+function stopTimer(){
 
-  timerRunning = false;
-  clearInterval(timerInterval);
-  timerInterval = null;
+  running = false;
+
+  if(interval){
+    clearInterval(interval);
+    interval = null;
+  }
 }
 
-function resetTimer() {
+function resetTimer(){
 
   stopTimer();
 
@@ -102,33 +121,108 @@ function resetTimer() {
 
   updateTimer();
 
-  document.getElementById("status").textContent =
-    "초기화되었습니다.";
+  statusText.textContent = "초기화되었습니다.";
 }
 
-async function startCamera() {
+async function startCamera(){
 
-  try {
+  try{
 
     const stream =
       await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user"
+        video:{
+          facingMode:"user"
         },
-        audio: false
+        audio:false
       });
 
-    document.getElementById("video").srcObject = stream;
+    video.srcObject = stream;
 
-    document.getElementById("status").textContent =
-      "🟢 카메라 작동 중";
+    statusText.textContent =
+      "🟡 얼굴을 찾는 중...";
 
-  } catch(error) {
+    startFaceDetection();
 
-    document.getElementById("status").textContent =
-      "❌ 카메라를 사용할 수 없습니다.";
+  }catch(error){
+
+    statusText.textContent =
+      "❌ 카메라 권한을 허용해주세요.";
 
   }
+}
+
+function startFaceDetection(){
+
+  const faceDetection = new FaceDetection({
+    locateFile: function(file){
+      return "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/" + file;
+    }
+  });
+
+  faceDetection.setOptions({
+    model:"short",
+    minDetectionConfidence:0.5
+  });
+
+  faceDetection.onResults(function(results){
+
+    if(!results.detections ||
+       results.detections.length === 0){
+
+      stopTimer();
+
+      statusText.textContent =
+        "🔴 얼굴을 찾는 중...";
+
+      return;
+    }
+
+    const box =
+      results.detections[0].boundingBox;
+
+    const centerY =
+      box.yCenter;
+
+    /*
+      화면에서 얼굴 위치를 기준으로
+      휴대폰이 머리 위에 있는지를
+      판단하는 테스트 방식.
+
+      얼굴이 화면 아래쪽에 보이면
+      휴대폰이 머리 위에 있을 가능성이 높음.
+    */
+
+    if(centerY > 0.55){
+
+      startTimer();
+
+      statusText.textContent =
+        "🟢 머리 위 감지 → 타이머 재개";
+
+    }else{
+
+      stopTimer();
+
+      statusText.textContent =
+        "🔴 머리 아래 → 타이머 일시정지";
+    }
+
+  });
+
+  async function detect(){
+
+    if(video.readyState >= 2){
+
+      await faceDetection.send({
+        image:video
+      });
+
+    }
+
+    requestAnimationFrame(detect);
+  }
+
+  detect();
 }
 
 updateTimer();
